@@ -1,32 +1,71 @@
 const CategoryModel = require('../models/categoryModel');
+const slugify = require('slugify');
+const asyncHandler = require('express-async-handler');
 
 // Create new category
-exports.createCategory = async (req, res) => {
-    try {
-        const name = req.body.name;
+exports.createCategory = asyncHandler(async (req, res) => {
+    const { name } = req.body;
 
-        const newCategory = new CategoryModel({ name });
-        const doc = await newCategory.save();
+    const category = await CategoryModel.create({
+        name,
+        slug: slugify(name, { lower: true })
+    });
 
-        res.json(doc);
-    } catch (err) {
-        res.status(500).json(err);
-    }
-};
+    res.status(200).json({ data: category });
+});
 
 // Get all categories
-exports.getAllCategories = async (req, res) => {
-    try {
-        const categories = await CategoryModel.find();
+exports.getAllCategories = asyncHandler(async (req, res) => {
+    // Pagenation
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 5;
+    const skip = (page - 1) * limit;
 
-        res.json({
-            results: categories.length,
-            data: categories
-        });
-    } catch (err) {
-        res.status(500).json({
-            message: 'Error fetching categories',
-            error: err.message
-        });
+    const categories = await CategoryModel.find().skip(skip).limit(limit);
+
+    res.status(200).json({
+        results: categories.length,
+        page,
+        data: categories
+    });
+});
+
+
+
+// Get single category
+exports.getCateogoryById = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+
+    const category = await CategoryModel.findById(id)
+
+    if (!category) {
+        res.status(404).json({ message: "Category not found" })
     }
-};
+    res.status(201).json({ data: category })
+})
+
+
+// Update category
+
+exports.updateCategory = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const { name } = req.body;
+    const category = await CategoryModel.findOneAndUpdate({ _id: id }, {
+        name,
+        slug: slugify(name, { lower: true })
+    }, { new: true });  // { new: true } returns the updated document   
+    if (!category) {
+        res.status(404).json({ message: "Category not found" })
+    }
+    res.status(201).json({ data: category })
+})
+
+// Delete category
+exports.deleteCategory = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const category = await CategoryModel.findByIdAndDelete(id);
+    if (!category) {
+        res.status(404).json({ message: "Category not found" })
+    }
+    res.status(201).json({ message: "Category deleted successfully" })
+})

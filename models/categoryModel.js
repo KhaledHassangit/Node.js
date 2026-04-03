@@ -3,8 +3,19 @@ const mongoose = require('mongoose');
 
 // Define Category schema
 const categorySchema = new mongoose.Schema({
-    name: String, 
-});
+    name: {
+        type: String,
+        required: [true, 'Category name is required'],
+        unique: [true, 'Category name must be unique'],
+        minlength: [3, 'Category name must be at least 3 characters long'],
+        maxlength: [32, 'Category name must be at most 32 characters long'],
+    },
+    slug: {
+        type: String,
+        lowercase: true,
+    },
+    image:String,
+}, { timestamps: true });
 
 // Create model from schema
 const CategoryModel = mongoose.model('Category', categorySchema);
