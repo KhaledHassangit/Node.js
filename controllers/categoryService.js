@@ -1,6 +1,7 @@
 const CategoryModel = require('../models/categoryModel');
 const slugify = require('slugify');
 const asyncHandler = require('express-async-handler');
+const ApiError = require('./utils/apiError');
 
 // Create new category
 exports.createCategory = asyncHandler(async (req, res) => {
@@ -33,13 +34,13 @@ exports.getAllCategories = asyncHandler(async (req, res) => {
 
 
 // Get single category
-exports.getCateogoryById = asyncHandler(async (req, res) => {
+exports.getCateogoryById = asyncHandler(async (req, res, next) => {
     const { id } = req.params;
 
     const category = await CategoryModel.findById(id)
 
     if (!category) {
-        res.status(404).json({ message: "Category not found" })
+        return next(new ApiError("Category not found", 404));
     }
     res.status(201).json({ data: category })
 })
@@ -47,7 +48,7 @@ exports.getCateogoryById = asyncHandler(async (req, res) => {
 
 // Update category
 
-exports.updateCategory = asyncHandler(async (req, res) => {
+exports.updateCategory = asyncHandler(async (req, res, next) => {
     const { id } = req.params;
     const { name } = req.body;
     const category = await CategoryModel.findOneAndUpdate({ _id: id }, {
@@ -55,17 +56,17 @@ exports.updateCategory = asyncHandler(async (req, res) => {
         slug: slugify(name, { lower: true })
     }, { new: true });  // { new: true } returns the updated document   
     if (!category) {
-        res.status(404).json({ message: "Category not found" })
+        return next(new ApiError("Category not found", 404));
     }
     res.status(201).json({ data: category })
 })
 
 // Delete category
-exports.deleteCategory = asyncHandler(async (req, res) => {
+exports.deleteCategory = asyncHandler(async (req, res,) => {
     const { id } = req.params;
     const category = await CategoryModel.findByIdAndDelete(id);
     if (!category) {
-        res.status(404).json({ message: "Category not found" })
+        return next(new ApiError("Category not found", 404));
     }
     res.status(201).json({ message: "Category deleted successfully" })
 })
