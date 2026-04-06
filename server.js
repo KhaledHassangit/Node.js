@@ -11,6 +11,7 @@ dotenv.config({
 
 const dbConnection = require("./config/database");
 const categoryRoute = require('./routes/categoryRoute');
+const subcategoryRoute = require('./routes/subCategoryRoute');
 
 app.use(express.json());
 
@@ -20,6 +21,8 @@ if (process.env.NODE_ENV !== 'production') {
 
 
 app.use('/api/v1/categories', categoryRoute);
+app.use('/api/v1/subcategories', subcategoryRoute);
+
 app.all("*"), (req, res, next) => {
     // const err = new Error(`Can't find this route: ${req.originalUrl}`);
     // res.status(404)

@@ -13,6 +13,7 @@ const {
     updateCategoryValidator,
     deleteCategoryValidator,
 } = require("../validators/categoryValidator");
+const subcategoryRoute = require('./routes/subCategoryRoute');
 
 const router = express.Router();
 
@@ -28,5 +29,8 @@ router
     .get(getCategoryValidator, getCateogoryById)
     .put(updateCategoryValidator, updateCategory)
     .delete(deleteCategoryValidator, deleteCategory);
+
+
+router.use("/:categoryId/subcategories", subcategoryRoute);
 
 module.exports = router;
