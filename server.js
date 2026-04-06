@@ -12,6 +12,7 @@ dotenv.config({
 const dbConnection = require("./config/database");
 const categoryRoute = require('./routes/categoryRoute');
 const subcategoryRoute = require('./routes/subCategoryRoute');
+const brandRoute = require('./routes/brandRoute');
 
 app.use(express.json());
 
@@ -22,6 +23,7 @@ if (process.env.NODE_ENV !== 'production') {
 
 app.use('/api/v1/categories', categoryRoute);
 app.use('/api/v1/subcategories', subcategoryRoute);
+app.use('/api/v1/brands', brandRoute);
 
 app.all("*"), (req, res, next) => {
     // const err = new Error(`Can't find this route: ${req.originalUrl}`);
@@ -47,7 +49,7 @@ process.on("unhandledRejection", (err) => {
     server.close(() => {
         process.exit(1);
         console.error(`Application closed due to unhandled rejection: ${err.name} - ${err.message}`);
-    }); 
+    });
 })
 
 
