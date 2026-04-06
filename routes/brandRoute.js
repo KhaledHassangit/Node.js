@@ -17,13 +17,13 @@ const {
 
 const router = express.Router();
 
-// ✅ GET ALL & CREATE
+//  GET ALL & CREATE
 router
     .route("/")
     .get(getAllBrands)
     .post(createBrandValidator, createBrand);
 
-// ✅ ID routes
+//  ID routes
 router
     .route("/:id")
     .get(getBrandValidator, getBrandById)
