@@ -59,9 +59,24 @@ exports.createProduct = asyncHandler(async (req, res, next) => {
 exports.getAllProducts = asyncHandler(async (req, res) => {
 
     //  Filtering
-    let filter = {};
-    if (req.query.category) {
-        filter.category = req.query.category;
+    const queryStringObj = { ...req.query }
+    const excludedFields = ['page', 'limit', 'sort'];
+    excludedFields.forEach(field => delete queryStringObj[field]);
+
+    let queryStr = JSON.stringify(queryStringObj);
+    queryStr = queryStr.replace(/\b(gte|gt|lte|lt)\b/g, match => `$${match}`);
+    const queryStringObjParsed = JSON.parse(queryStr);
+
+    let mongooseQuery = ProductModel.find(queryStringObjParsed);
+
+    //  Sorting
+    if (req.query.sort) {
+        // price,quantity  => "price quantity"
+        const sortBy = req.query.sort.split(',').join(' ');
+        mongooseQuery = mongooseQuery.sort(sortBy);
+    } else {
+        // default sort
+        mongooseQuery = mongooseQuery.sort('-createdAt');
     }
 
     //  Pagination
@@ -69,7 +84,8 @@ exports.getAllProducts = asyncHandler(async (req, res) => {
     const limit = parseInt(req.query.limit) || 5;
     const skip = (page - 1) * limit;
 
-    const products = await ProductModel.find(filter)
+    // تنفيذ الكويري
+    const products = await mongooseQuery
         .populate('category', 'name')
         .populate('subCategory', 'name')
         .populate('brand', 'name')
