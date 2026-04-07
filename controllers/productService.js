@@ -5,7 +5,7 @@ const BrandModel = require('../models/brandModel');
 
 const slugify = require('slugify');
 const asyncHandler = require('express-async-handler');
-const ApiError = require('./utils/apiError');
+const ApiError = require('../utils/apiError');
 
 
 //  Create Product
@@ -30,7 +30,7 @@ exports.createProduct = asyncHandler(async (req, res, next) => {
     //  check subcategories exist
     if (subCategory && subCategory.length > 0) {
         const subCategories = await SubCategoryModel.find({
-            _id: { $in: subCategory },
+            _id: { $in: subCategory, $exists: true },
         });
 
         if (subCategories.length !== subCategory.length) {

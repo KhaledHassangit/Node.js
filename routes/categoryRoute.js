@@ -13,7 +13,7 @@ const {
     updateCategoryValidator,
     deleteCategoryValidator,
 } = require("../validators/categoryValidator");
-const subcategoryRoute = require('./routes/subCategoryRoute');
+const subcategoryRoute = require('./subCategoryRoute');
 
 const router = express.Router();
 

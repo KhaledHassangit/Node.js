@@ -8,7 +8,7 @@ const productSchema = new mongoose.Schema({
         required: [true, 'Product title is required'],
         unique: [true, 'Product title must be unique'],
         minlength: [3, 'Product title must be at least 3 characters long'],
-        maxlength: [32, 'Product title must be at most 32 characters long'],
+        maxlength: [100, 'Product title must be at most 32 characters long'],
         trim: true,
     },
     slug: {

@@ -2,12 +2,12 @@ const SubCategoryModel = require('../models/subCategoryModel');
 const CategoryModel = require('../models/categoryModel');
 const slugify = require('slugify');
 const asyncHandler = require('express-async-handler');
-const ApiError = require('./utils/apiError');
+const ApiError = require('../utils/apiError');
 
 
 //  Create SubCategory
 exports.createSubCategory = asyncHandler(async (req, res, next) => {
-    if(!req.body.category && req.params.categoryId) {
+    if (!req.body.category && req.params.categoryId) {
         req.body.category = req.params.categoryId;
     }
     const { name, category } = req.body;
