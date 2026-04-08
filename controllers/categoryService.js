@@ -2,6 +2,7 @@ const CategoryModel = require('../models/categoryModel');
 const slugify = require('slugify');
 const asyncHandler = require('express-async-handler');
 const ApiError = require('../utils/apiError');
+const ApiFeatures = require('../utils/apiFeatures');
 
 // Create new category
 exports.createCategory = asyncHandler(async (req, res) => {
@@ -15,19 +16,26 @@ exports.createCategory = asyncHandler(async (req, res) => {
     res.status(200).json({ data: category });
 });
 
-// Get all categories
+// Get All Categories - Refactored with ApiFeatures
 exports.getAllCategories = asyncHandler(async (req, res) => {
-    // Pagenation
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 5;
-    const skip = (page - 1) * limit;
-
-    const categories = await CategoryModel.find().skip(skip).limit(limit);
-
+    // Get total count for pagination
+    const documentsCount = await CategoryModel.countDocuments();
+    
+    // Initialize ApiFeatures
+    const apiFeatures = new ApiFeatures(CategoryModel.find(), req.query)
+        .filter()
+        .search() // Will use default search on 'name' field
+        .sort()
+        .limitFields()
+        .paginate(documentsCount);
+    
+    // Execute query
+    const categories = await apiFeatures.mongooseQuery;
+    
     res.status(200).json({
         results: categories.length,
-        page,
-        data: categories
+        pagination: apiFeatures.paginationResult,
+        data: categories,
     });
 });
 

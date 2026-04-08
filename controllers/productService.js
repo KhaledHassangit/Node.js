@@ -2,13 +2,13 @@ const ProductModel = require('../models/productModel');
 const CategoryModel = require('../models/categoryModel');
 const SubCategoryModel = require('../models/subCategoryModel');
 const BrandModel = require('../models/brandModel');
+const ApiFeatures = require('../utils/apiFeatures');
 
 const slugify = require('slugify');
 const asyncHandler = require('express-async-handler');
 const ApiError = require('../utils/apiError');
 
-
-//  Create Product
+// Create Product (unchanged)
 exports.createProduct = asyncHandler(async (req, res, next) => {
     const {
         title,
@@ -21,13 +21,13 @@ exports.createProduct = asyncHandler(async (req, res, next) => {
         brand,
     } = req.body;
 
-    //  check category exists
+    // check category exists
     const categoryExists = await CategoryModel.findById(category);
     if (!categoryExists) {
         return next(new ApiError("Category not found", 404));
     }
 
-    //  check subcategories exist
+    // check subcategories exist
     if (subCategory && subCategory.length > 0) {
         const subCategories = await SubCategoryModel.find({
             _id: { $in: subCategory, $exists: true },
@@ -38,7 +38,7 @@ exports.createProduct = asyncHandler(async (req, res, next) => {
         }
     }
 
-    //  check brand exists
+    // check brand exists
     if (brand) {
         const brandExists = await BrandModel.findById(brand);
         if (!brandExists) {
@@ -54,53 +54,33 @@ exports.createProduct = asyncHandler(async (req, res, next) => {
     res.status(201).json({ data: product });
 });
 
-
-//  Get All Products
+// Get All Products 
 exports.getAllProducts = asyncHandler(async (req, res) => {
+    // Get total count for pagination before applying pagination
+    const documentsCount = await ProductModel.countDocuments();
 
-    //  Filtering
-    const queryStringObj = { ...req.query }
-    const excludedFields = ['page', 'limit', 'sort'];
-    excludedFields.forEach(field => delete queryStringObj[field]);
+    // Initialize ApiFeatures
+    const apiFeatures = new ApiFeatures(ProductModel.find(), req.query)
+        .filter()
+        .search('Products')
+        .sort()
+        .limitFields()
+        .paginate(documentsCount);
 
-    let queryStr = JSON.stringify(queryStringObj);
-    queryStr = queryStr.replace(/\b(gte|gt|lte|lt)\b/g, match => `$${match}`);
-    const queryStringObjParsed = JSON.parse(queryStr);
-
-    let mongooseQuery = ProductModel.find(queryStringObjParsed);
-
-    //  Sorting
-    if (req.query.sort) {
-        // price,quantity  => "price quantity"
-        const sortBy = req.query.sort.split(',').join(' ');
-        mongooseQuery = mongooseQuery.sort(sortBy);
-    } else {
-        // default sort
-        mongooseQuery = mongooseQuery.sort('-createdAt');
-    }
-
-    //  Pagination
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 5;
-    const skip = (page - 1) * limit;
-
-    // تنفيذ الكويري
-    const products = await mongooseQuery
+    // Execute query with population
+    const products = await apiFeatures.mongooseQuery
         .populate('category', 'name')
         .populate('subCategory', 'name')
-        .populate('brand', 'name')
-        .skip(skip)
-        .limit(limit);
+        .populate('brand', 'name');
 
     res.status(200).json({
         results: products.length,
-        page,
+        pagination: apiFeatures.paginationResult,
         data: products,
     });
 });
 
-
-//  Get Single Product
+// Get Single Product
 exports.getProductById = asyncHandler(async (req, res, next) => {
     const { id } = req.params;
 
@@ -116,8 +96,7 @@ exports.getProductById = asyncHandler(async (req, res, next) => {
     res.status(200).json({ data: product });
 });
 
-
-//  Update Product
+// Update Product 
 exports.updateProduct = asyncHandler(async (req, res, next) => {
     const { id } = req.params;
 
@@ -141,8 +120,7 @@ exports.updateProduct = asyncHandler(async (req, res, next) => {
     res.status(200).json({ data: product });
 });
 
-
-//  Delete Product
+// Delete Product 
 exports.deleteProduct = asyncHandler(async (req, res, next) => {
     const { id } = req.params;
 
