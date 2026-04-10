@@ -6,6 +6,8 @@ const {
     getBrandById,
     updateBrand,
     deleteBrand,
+    reSizeImage,
+    uploadBrandImage,
 } = require("../controllers/brandService");
 
 const {
@@ -21,13 +23,13 @@ const router = express.Router();
 router
     .route("/")
     .get(getAllBrands)
-    .post(createBrandValidator, createBrand);
+    .post(uploadBrandImage, reSizeImage, createBrandValidator, createBrand);
 
 //  ID routes
 router
     .route("/:id")
     .get(getBrandValidator, getBrandById)
-    .put(updateBrandValidator, updateBrand)
+    .put(uploadBrandImage, reSizeImage, updateBrandValidator, updateBrand)
     .delete(deleteBrandValidator, deleteBrand);
 
 module.exports = router;

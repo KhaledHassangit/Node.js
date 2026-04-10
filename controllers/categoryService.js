@@ -2,36 +2,14 @@ const CategoryModel = require('../models/categoryModel');
 const factory = require('../utils/handlerFactory');
 const slugify = require('slugify');
 const asyncHandler = require('express-async-handler');
-const multer = require('multer')
-const upload = multer({ dest: "uploads/categories" })
 const sharp = require('sharp');
 import { v4 as uuidv4 } from 'uuid';
-const ApiError = require('../utils/apiError');
+const { uploadSingleImage } = require('../middlewares/uploadImageMiddleWare');
 
 
 
-// diskStorage engine for multer
-const multerStorage = multer.memoryStorage({
-    destination: function (req, file, cb) {
-        cb(null, "uploads/categories");
-    },
-    filename: function (req, file, cb) {
-        const ext = file.mimetype.split("/")[1];
-        const fiilename = `category-${uuidv4()}-${Date.now()}.${ext}`;
-        cb(null, fiilename);
-    },
-})
 
-
-const multerFilter = (req, file, cb) => {
-    if (file.mimetype.startsWith("image")) {
-        cb(null, true);
-    } else {
-        cb(new ApiError("Not an image! Please upload only images.", 400), false);
-    }
-}
-
-
+// Image Proccessing Middleware
 exports.reSizeImage = asyncHandler(async (req, res, next) => {
     if (!req.file) return next();
 
@@ -49,9 +27,7 @@ exports.reSizeImage = asyncHandler(async (req, res, next) => {
 
 });
 
-exports.uploadCategoryImage = upload.single({ storage: multerStorage, fileFilter: multerFilter })
-
-
+exports.uploadCategoryImage = uploadSingleImage('image')
 
 
 // @desc    Create Category
@@ -66,17 +42,10 @@ exports.createCategory = asyncHandler(async (req, res, next) => {
 
 
 
-
-
-
-
 // @desc    Get All Categories
 // @route   GET /api/v1/categories
 // @access  Public
 exports.getAllCategories = factory.getAll(CategoryModel, 'Category');
-
-
-
 
 
 
@@ -98,6 +67,7 @@ exports.updateCategory = asyncHandler(async (req, res, next) => {
 
     return factory.updateOne(CategoryModel)(req, res, next);
 });
+
 
 // @desc    Delete Category
 // @route   DELETE /api/v1/categories/:id

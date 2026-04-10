@@ -2,6 +2,28 @@ const BrandModel = require('../models/brandModel');
 const factory = require('../utils/handlerFactory');
 const slugify = require('slugify');
 const asyncHandler = require('express-async-handler');
+const { uploadSingleImage } = require('../middlewares/uploadImageMiddleWare');
+
+
+// Image Proccessing Middleware
+exports.reSizeImage = asyncHandler(async (req, res, next) => {
+    if (!req.file) return next();
+
+    const filename = `brand-${uuidv4()}-${Date.now()}.webp`;
+
+    await sharp(req.file.buffer)
+        .resize(600, 600)
+        .toFormat('webp')
+        .webp({ quality: 95 })
+        .toFile(`uploads/brands/${filename}`);
+    // Save image in req.body to save it in DB 
+    req.body.image = filename;
+
+    next();
+
+});
+
+exports.uploadBrandImage = uploadSingleImage('image')
 
 // @desc    Create Brand
 // @route   POST /api/v1/brands
