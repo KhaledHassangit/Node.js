@@ -1,53 +1,72 @@
+/// ================= IMPORTS =================
 const express = require('express');
-const app = express();
+const path = require('path');
 
 const morgan = require('morgan');
 const dotenv = require('dotenv');
+
+const dbConnection = require('./config/database');
+
 const ApiError = require('./utils/apiError');
 const globalErrorHandler = require('./middlewares/errorMiddleware');
-dotenv.config({
-    path: './config.env'
-});
 
-const dbConnection = require("./config/database");
 const categoryRoute = require('./routes/categoryRoute');
 const subcategoryRoute = require('./routes/subCategoryRoute');
 const brandRoute = require('./routes/brandRoute');
 const productRoute = require('./routes/productRoute');
 
+
+/// ================= CONFIG =================
+dotenv.config({ path: './config.env' });
+
+
+/// ================= APP INIT =================
+const app = express();
+
+
+/// ================= MIDDLEWARES =================
 app.use(express.json());
+app.use(express.static(path.join(__dirname, 'uploads')));
 
 if (process.env.NODE_ENV !== 'production') {
     app.use(morgan('dev'));
 }
 
 
+/// ================= ROUTES =================
 app.use('/api/v1/categories', categoryRoute);
 app.use('/api/v1/subcategories', subcategoryRoute);
 app.use('/api/v1/brands', brandRoute);
 app.use('/api/v1/products', productRoute);
 
-app.use((req, res, next) => {
+
+/// ================= NOT FOUND =================
+app.all('*', (req, res, next) => {
     next(new ApiError(`Can't find this route: ${req.originalUrl}`, 404));
 });
+
+
+/// ================= ERROR HANDLER =================
 app.use(globalErrorHandler);
 
-// DB Connection
-dbConnection(globalErrorHandler);
 
+/// ================= DB CONNECTION =================
+dbConnection();
+
+
+/// ================= SERVER =================
 const port = process.env.PORT || 8000;
+
 const server = app.listen(port, () => {
-    console.log(`Example app listening on port ${port}`);
+    console.log(`Server running on port ${port}`);
 });
 
-// *Events* Handle Erros Outside Express Like DB Connection Errors Or Unhandled Rejections
-process.on("unhandledRejection", (err) => {
+
+/// ================= GLOBAL ERRORS =================
+process.on('unhandledRejection', (err) => {
     console.error(`Unhandled Rejection: ${err.name} - ${err.message}`);
-    console.error(err);
+
     server.close(() => {
         process.exit(1);
-        console.error(`Application closed due to unhandled rejection: ${err.name} - ${err.message}`);
     });
-})
-
-
+});

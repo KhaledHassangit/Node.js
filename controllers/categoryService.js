@@ -4,11 +4,14 @@ const slugify = require('slugify');
 const asyncHandler = require('express-async-handler');
 const multer = require('multer')
 const upload = multer({ dest: "uploads/categories" })
+const sharp = require('sharp');
 import { v4 as uuidv4 } from 'uuid';
-import ApiError from '../utils/apiError';
+const ApiError = require('../utils/apiError');
+
+
 
 // diskStorage engine for multer
-const multerStorage = multer.diskStorage({
+const multerStorage = multer.memoryStorage({
     destination: function (req, file, cb) {
         cb(null, "uploads/categories");
     },
@@ -18,6 +21,8 @@ const multerStorage = multer.diskStorage({
         cb(null, fiilename);
     },
 })
+
+
 const multerFilter = (req, file, cb) => {
     if (file.mimetype.startsWith("image")) {
         cb(null, true);
@@ -25,7 +30,29 @@ const multerFilter = (req, file, cb) => {
         cb(new ApiError("Not an image! Please upload only images.", 400), false);
     }
 }
+
+
+exports.reSizeImage = asyncHandler(async (req, res, next) => {
+    if (!req.file) return next();
+
+    const filename = `category-${uuidv4()}-${Date.now()}.webp`;
+
+    await sharp(req.file.buffer)
+        .resize(600, 600)
+        .toFormat('webp')
+        .webp({ quality: 90 })
+        .toFile(`uploads/categories/${filename}`);
+    // Save image in req.body to save it in DB 
+    req.body.image = filename;
+
+    next();
+
+});
+
 exports.uploadCategoryImage = upload.single({ storage: multerStorage, fileFilter: multerFilter })
+
+
+
 
 // @desc    Create Category
 // @route   POST /api/v1/categories
@@ -37,15 +64,28 @@ exports.createCategory = asyncHandler(async (req, res, next) => {
     return factory.createOne(CategoryModel)(req, res, next);
 });
 
+
+
+
+
+
+
 // @desc    Get All Categories
 // @route   GET /api/v1/categories
 // @access  Public
 exports.getAllCategories = factory.getAll(CategoryModel, 'Category');
 
+
+
+
+
+
 // @desc    Get Single Category
 // @route   GET /api/v1/categories/:id
 // @access  Public
 exports.getCategoryById = factory.getOne(CategoryModel);
+
+
 
 // @desc    Update Category
 // @route   PUT /api/v1/categories/:id

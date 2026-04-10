@@ -14,20 +14,15 @@ const {
     deleteCategoryValidator,
 } = require("../validators/categoryValidator");
 const subcategoryRoute = require('./subCategoryRoute');
-const multer = require('multer')
-const upload = multer({ dest: "uploads/categories" })
-
+const uploadCategoryImage = require("../controllers/categoryService")
+const reSizeImage = require("../controllers/categoryService")
 const router = express.Router();
 
 //  GET ALL & CREATE
 router
     .route("/")
     .get(getAllCategories)
-    .post(upload.single("image"), (req, res, next) => {
-        if (req.file) {
-            req.body.image = req.file.path;
-        } next();
-    },
+    .post(uploadCategoryImage, reSizeImage,
         createCategoryValidator, createCategory);
 
 
@@ -35,7 +30,7 @@ router
 router
     .route("/:id")
     .get(getCategoryValidator, getCateogoryById)
-    .put(updateCategoryValidator, updateCategory)
+    .put(uploadCategoryImage, reSizeImage, updateCategoryValidator, updateCategory)
     .delete(deleteCategoryValidator, deleteCategory);
 
 
