@@ -2,29 +2,17 @@ const CategoryModel = require('../models/categoryModel');
 const factory = require('../utils/handlerFactory');
 const slugify = require('slugify');
 const asyncHandler = require('express-async-handler');
-const sharp = require('sharp');
-import { v4 as uuidv4 } from 'uuid';
-const { uploadSingleImage } = require('../middlewares/uploadImageMiddleWare');
+const { resizeSingleImage } = require('../middlewares/resizeImageMiddleware');
 
 
 
 
 // Image Proccessing Middleware
-exports.reSizeImage = asyncHandler(async (req, res, next) => {
-    if (!req.file) return next();
-
-    const filename = `category-${uuidv4()}-${Date.now()}.webp`;
-
-    await sharp(req.file.buffer)
-        .resize(600, 600)
-        .toFormat('webp')
-        .webp({ quality: 90 })
-        .toFile(`uploads/categories/${filename}`);
-    // Save image in req.body to save it in DB 
-    req.body.image = filename;
-
-    next();
-
+exports.reSizeCategoryImage = resizeSingleImage({
+    folder: 'categories',
+    width: 600,
+    height: 600,
+    quality: 90,
 });
 
 exports.uploadCategoryImage = uploadSingleImage('image')

@@ -16,4 +16,10 @@ const upload = multer({
     fileFilter: multerFilter,
 });
 
-exports.uploadSingleImage = (fieldName) => upload.single(fieldName);
+// single
+exports.uploadSingleImage = (fieldName) =>
+    upload.single(fieldName);
+
+// multiple fields 
+exports.uploadMixOfImages = (fieldsArray) =>
+    upload.fields(fieldsArray);

@@ -6,6 +6,28 @@ const factory = require('../utils/handlerFactory');
 const slugify = require('slugify');
 const asyncHandler = require('express-async-handler');
 const ApiError = require('../utils/apiError');
+const multer = require('multer');
+const { v4: uuidv4 } = require('uuid');
+const sharp = require('sharp');
+const { uploadMixOfImages } = require('../middlewares/uploadImageMiddleWare');
+const { resizeImages } = require('../middlewares/resizeImageMiddleware');
+
+
+
+const multerStorage = multer.memoryStorage();
+
+
+// upload
+exports.uploadProductImages = uploadMixOfImages([
+    { name: 'imageCover', maxCount: 1 },
+    { name: 'images', maxCount: 5 },
+]);
+
+// resize
+exports.resizeProductImages = resizeImages({
+    folder: 'products',
+});
+
 
 // @desc    Create Product
 // @route   POST /api/v1/products

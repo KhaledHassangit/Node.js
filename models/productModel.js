@@ -77,6 +77,8 @@ const productSchema = new mongoose.Schema({
 }, { timestamps: true })
 
 
+
+
 const productModel = mongoose.model("Product", productSchema)
 
 // Mongoose query middleware
@@ -88,4 +90,26 @@ productSchema.pre(/^find/, function (next) {
     next();
 });
 
+productSchema.post("init", (doc) => {
+    if (doc.imageCover) {
+        doc.imageCover = `${process.env.BASE_URL}/products/${doc.imageCover}`;
+    }
+
+    if (doc.images && doc.images.length > 0) {
+        doc.images = doc.images.map(img => {
+            return `${process.env.BASE_URL}/products/${img}`;
+        });
+    }
+});
+productSchema.post("save", (doc) => {
+    if (doc.imageCover) {
+        doc.imageCover = `${process.env.BASE_URL}/products/${doc.imageCover}`;
+    }
+
+    if (doc.images && doc.images.length > 0) {
+        doc.images = doc.images.map(img => {
+            return `${process.env.BASE_URL}/products/${img}`;
+        });
+    }
+});
 module.exports = productModel

@@ -14,9 +14,21 @@ const brandSchema = new mongoose.Schema({
         type: String,
         lowercase: true,
     },
-    image:String,
+    image: String,
 }, { timestamps: true });
 
+brandSchema.post("init", (doc) => {
+    if (doc.image) {
+        const imageUrl = `${process.env.BASE_URL}/brands/${doc.image}`;
+        doc.image = imageUrl;
+    }
+})
+brandSchema.post("save", (doc) => {
+    if (doc.image) {
+        const imageUrl = `${process.env.BASE_URL}/brands/${doc.image}`;
+        doc.image = imageUrl;
+    }
+})
 // Create model from schema
 const BrandModel = mongoose.model('Brand', brandSchema);
 

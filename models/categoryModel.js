@@ -14,9 +14,22 @@ const categorySchema = new mongoose.Schema({
         type: String,
         lowercase: true,
     },
-    image:String,
+    image: String,
 }, { timestamps: true });
 
+
+categorySchema.post("init", (doc) => {
+    if (doc.image) {
+        const imageUrl = `${process.env.BASE_URL}/categories/${doc.image}`;
+        doc.image = imageUrl;
+    }
+})
+categorySchema.post("save", (doc) => {
+    if (doc.image) {
+        const imageUrl = `${process.env.BASE_URL}/categories/${doc.image}`;
+        doc.image = imageUrl;
+    }
+})
 // Create model from schema
 const CategoryModel = mongoose.model('Category', categorySchema);
 
