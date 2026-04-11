@@ -27,6 +27,7 @@ exports.resizeSingleImage = ({
 
         next();
     });
+    
 exports.resizeImages = ({
     folder,
     imageCoverField = 'imageCover',
