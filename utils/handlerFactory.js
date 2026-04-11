@@ -2,42 +2,60 @@ const asyncHandler = require('express-async-handler');
 const ApiError = require('../utils/apiError');
 const ApiFeatures = require('../utils/apiFeatures');
 
+
+//  DELETE
 exports.deleteOne = (Model) =>
     asyncHandler(async (req, res, next) => {
         const { id } = req.params;
+
         const document = await Model.findByIdAndDelete(id);
 
         if (!document) {
             return next(new ApiError(`No document for this id ${id}`, 404));
         }
+
         res.status(204).send();
     });
 
+
+//  UPDATE
 exports.updateOne = (Model) =>
     asyncHandler(async (req, res, next) => {
-        const document = await Model.findByIdAndUpdate(req.params.id, req.body, {
-            new: true,
-        });
+        const document = await Model.findByIdAndUpdate(
+            req.params.id,
+            req.body,
+            {
+                new: true,
+                runValidators: true, 
+            }
+        );
 
         if (!document) {
             return next(
                 new ApiError(`No document for this id ${req.params.id}`, 404)
             );
         }
+
         res.status(200).json({ data: document });
     });
 
+
+//  CREATE
 exports.createOne = (Model) =>
     asyncHandler(async (req, res) => {
         const newDoc = await Model.create(req.body);
+
         res.status(201).json({ data: newDoc });
     });
 
+
+//  GET ONE
 exports.getOne = (Model, populationOpt) =>
     asyncHandler(async (req, res, next) => {
         const { id } = req.params;
 
         let query = Model.findById(id);
+
         if (populationOpt) {
             query = query.populate(populationOpt);
         }
@@ -47,18 +65,24 @@ exports.getOne = (Model, populationOpt) =>
         if (!document) {
             return next(new ApiError(`No document for this id ${id}`, 404));
         }
+
         res.status(200).json({ data: document });
     });
 
+
+//  GET ALL
 exports.getAll = (Model, modelName = '', populationOpt = null) =>
     asyncHandler(async (req, res) => {
+
         let filter = {};
         if (req.filter) {
             filter = req.filter;
         }
 
-        // Build query
+        // count
         const documentsCounts = await Model.countDocuments(filter);
+
+        // build query
         const apiFeatures = new ApiFeatures(Model.find(filter), req.query)
             .paginate(documentsCounts)
             .filter()
@@ -66,10 +90,8 @@ exports.getAll = (Model, modelName = '', populationOpt = null) =>
             .limitFields()
             .sort();
 
-        // Execute query
-        const { mongooseQuery, paginationResult } = apiFeatures;
+        let query = apiFeatures.mongooseQuery;
 
-        let query = mongooseQuery;
         if (populationOpt) {
             query = query.populate(populationOpt);
         }
@@ -78,7 +100,7 @@ exports.getAll = (Model, modelName = '', populationOpt = null) =>
 
         res.status(200).json({
             results: documents.length,
-            pagination: paginationResult,
-            data: documents
+            pagination: apiFeatures.paginationResult,
+            data: documents,
         });
     });
