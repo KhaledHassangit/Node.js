@@ -38,15 +38,14 @@ if (process.env.NODE_ENV !== 'production') {
 app.use('/api/v1/categories', categoryRoute);
 app.use('/api/v1/subcategories', subcategoryRoute);
 app.use('/api/v1/brands', brandRoute);
-app.use('/api/v1/products', productRoute); 
-app.use('/api/v1/users', userRoute); 
+app.use('/api/v1/products', productRoute);
+app.use('/api/v1/users', userRoute);
 
 
 /// ================= NOT FOUND =================
-app.all('*', (req, res, next) => {
+app.use((req, res, next) => {
     next(new ApiError(`Can't find this route: ${req.originalUrl}`, 404));
 });
-
 
 /// ================= ERROR HANDLER =================
 app.use(globalErrorHandler);

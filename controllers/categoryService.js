@@ -3,6 +3,7 @@ const factory = require('../utils/handlerFactory');
 const slugify = require('slugify');
 const asyncHandler = require('express-async-handler');
 const { resizeSingleImage } = require('../middlewares/resizeImageMiddleware');
+const { uploadSingleImage } = require("../middlewares/uploadImageMiddleWare")
 
 
 
