@@ -22,9 +22,7 @@ const {
 const router = express.Router();
 
 
-// ==========================
 // GET ALL & CREATE
-// ==========================
 router
     .route("/")
     .get(getAllUsers)
