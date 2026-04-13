@@ -82,7 +82,7 @@ exports.protect = asyncHandler(async (req, res, next) => {
     if (!currentUser) {
         return next(new ApiError(401, 'The user belonging to this token does no longer exist.'))
     }
-    if(currentUser.passwordChangedAt){
+    if (currentUser.passwordChangedAt) {
         const passwordChangedTimestamp = parseInt(currentUser.passwordChangedAt.getTime() / 1000, 10);
         if (decoded.iat < passwordChangedTimestamp) {
             return next(new ApiError(401, 'User recently changed password! Please log in again.'))
@@ -92,3 +92,15 @@ exports.protect = asyncHandler(async (req, res, next) => {
     next();
 
 })
+
+
+exports.restrictTo = (...roles) => {
+    asyncHandler(async (req, res, next) => {
+        if (!roles.includes(req.user.role)) {
+            return next(new ApiError(403, 'You do not have permission to perform this action'))
+        }
+        next();
+        
+    })
+
+}

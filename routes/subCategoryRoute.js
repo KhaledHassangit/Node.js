@@ -14,6 +14,7 @@ const {
     updateSubCategoryValidator,
     deleteSubCategoryValidator,
 } = require("../validators/subCategoryValidator");
+const authService = require("../controllers/authService");
 
 const router = express.Router({ mergeParams: true }); //  to access parent route params (categoryId)
 
@@ -21,14 +22,20 @@ const router = express.Router({ mergeParams: true }); //  to access parent route
 router
     .route("/")
     .get(getAllSubCategories)
-    .post(createSubCategoryValidator, createSubCategory);
+    .post(authService.protect,
+        authService.restrictTo("admin"),
+        createSubCategoryValidator, createSubCategory);
 
 //  ID routes
 router
     .route("/:id")
     .get(getSubCategoryValidator, getSubCategoryById)
-    .put(updateSubCategoryValidator, updateSubCategory)
-    .delete(deleteSubCategoryValidator, deleteSubCategory);
+    .put(authService.protect,
+        authService.restrictTo("admin"),
+        updateSubCategoryValidator, updateSubCategory)
+    .delete(authService.protect,
+        authService.restrictTo("admin"),
+        deleteSubCategoryValidator, deleteSubCategory);
 
 
 module.exports = router;
