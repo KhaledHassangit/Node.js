@@ -2,6 +2,7 @@ const asyncHandler = require('express-async-handler');
 const jwt = require('jsonwebtoken');
 const UserModel = require('../models/userModel');
 const bcrypt = require('bcryptjs');
+const ApiError = require('../utils/apiError');
 
 const createToken = (payload) => {
     jwt.sign(
@@ -62,3 +63,32 @@ exports.login = asyncHandler(async (req, res, next) => {
         data: { user, token },
     });
 });
+
+
+exports.protect = asyncHandler(async (req, res, next) => {
+    // get token from headers
+    let token;
+    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+        token = req.headers.authorization.split(' ')[1];
+    }
+    if (!token) {
+        return next(new ApiError(401, 'You are not logged in! Please log in to get access.'))
+    }
+    //  verify token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
+
+    const currentUser = await UserModel.findById(decoded.userId);
+
+    if (!currentUser) {
+        return next(new ApiError(401, 'The user belonging to this token does no longer exist.'))
+    }
+    if(currentUser.passwordChangedAt){
+        const passwordChangedTimestamp = parseInt(currentUser.passwordChangedAt.getTime() / 1000, 10);
+        if (decoded.iat < passwordChangedTimestamp) {
+            return next(new ApiError(401, 'User recently changed password! Please log in again.'))
+        }
+    }
+    req.user = currentUser;
+    next();
+
+})
