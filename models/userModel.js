@@ -52,7 +52,8 @@ const userSchema = new mongoose.Schema(
             type: Boolean,
             default: true,
         },
-
+        passwordResetCode: String,
+        passwordResetExpires: Date,
         phoneNumber: String,
 
         address: String,
@@ -64,7 +65,7 @@ const userSchema = new mongoose.Schema(
     { timestamps: true }
 );
 userSchema.pre("save", async function (next) {
-    if(!this.isModified("password")) return next();
+    if (!this.isModified("password")) return next();
     this.password = await bcrypt.hashSync(this.password, 12);
     next();
 });

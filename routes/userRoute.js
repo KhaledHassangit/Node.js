@@ -9,6 +9,10 @@ const {
     changeUserPassword,
     uploadUserImage,
     resizeUserImage,
+    getLoggedUserData,
+    updateLoggedUserPassword,
+    deleteLoggedUserData,
+    updateLoggedUserData
 } = require("../controllers/userService");
 
 const {
@@ -22,6 +26,10 @@ const {
 const router = express.Router();
 const authService = require("../controllers/authService");
 
+router.get("/getMe", authService.protect, getLoggedUserData, getUserById);
+router.put("/changePassword", authService.protect, updateLoggedUserPassword);
+router.put("/updateMe", authService.protect, uploadUserImage, resizeUserImage, updateLoggedUserData);
+router.delete("/deleteMe", authService.protect, deleteLoggedUserData);
 
 // GET ALL & CREATE
 router

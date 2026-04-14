@@ -3,18 +3,20 @@ const jwt = require('jsonwebtoken');
 const UserModel = require('../models/userModel');
 const bcrypt = require('bcryptjs');
 const ApiError = require('../utils/apiError');
+const crypto = require('crypto');
+const sendEmail = require("../utils/sendEmail");
 
-const createToken = (payload) => {
-    jwt.sign(
-        { userId: payload },
+// ================= CREATE TOKEN =================
+exports.createToken = (payload) => {
+    return jwt.sign(
+        payload,
         process.env.JWT_SECRET_KEY,
         { expiresIn: process.env.JWT_EXPIRES_IN }
     );
-}
+};
 
+// ================= SIGN UP =================
 exports.singUp = asyncHandler(async (req, res, next) => {
-
-    // remove passwordConfirm
     delete req.body.passwordConfirm;
 
     const user = await UserModel.create({
@@ -24,38 +26,25 @@ exports.singUp = asyncHandler(async (req, res, next) => {
     });
 
     const token = createToken({ userId: user._id });
+
     res.status(201).json({
         status: 'success',
         data: { user, token }
     });
 });
 
-
+// ================= LOGIN =================
 exports.login = asyncHandler(async (req, res, next) => {
     const { email, password } = req.body;
 
-    // 1) check if user exists + include password
     const user = await UserModel.findOne({ email }).select('+password');
 
-    if (!user) {
-        return res.status(401).json({
-            message: 'Incorrect email or password',
-        });
+    if (!user || !(await bcrypt.compare(password, user.password))) {
+        return next(new ApiError(401, 'Incorrect email or password'));
     }
 
-    // 2) compare password
-    const isMatch = await bcrypt.compare(password, user.password);
-
-    if (!isMatch) {
-        return res.status(401).json({
-            message: 'Incorrect email or password',
-        });
-    }
-
-    // 3) generate token
     const token = createToken({ userId: user._id });
 
-    // 4) remove password from response
     user.password = undefined;
 
     res.status(200).json({
@@ -64,43 +53,140 @@ exports.login = asyncHandler(async (req, res, next) => {
     });
 });
 
-
+// ================= PROTECT =================
 exports.protect = asyncHandler(async (req, res, next) => {
-    // get token from headers
     let token;
+
     if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
         token = req.headers.authorization.split(' ')[1];
     }
+
     if (!token) {
-        return next(new ApiError(401, 'You are not logged in! Please log in to get access.'))
+        return next(new ApiError(401, 'You are not logged in!'));
     }
-    //  verify token
+
     const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
 
     const currentUser = await UserModel.findById(decoded.userId);
 
     if (!currentUser) {
-        return next(new ApiError(401, 'The user belonging to this token does no longer exist.'))
+        return next(new ApiError(401, 'User no longer exists'));
     }
+
     if (currentUser.passwordChangedAt) {
-        const passwordChangedTimestamp = parseInt(currentUser.passwordChangedAt.getTime() / 1000, 10);
-        if (decoded.iat < passwordChangedTimestamp) {
-            return next(new ApiError(401, 'User recently changed password! Please log in again.'))
+        const changedTime = parseInt(currentUser.passwordChangedAt.getTime() / 1000, 10);
+
+        if (decoded.iat < changedTime) {
+            return next(new ApiError(401, 'Password changed recently. Login again.'));
         }
     }
+
     req.user = currentUser;
     next();
+});
 
-})
-
-
+// ================= RESTRICT =================
 exports.restrictTo = (...roles) => {
-    asyncHandler(async (req, res, next) => {
+    return asyncHandler(async (req, res, next) => {
         if (!roles.includes(req.user.role)) {
-            return next(new ApiError(403, 'You do not have permission to perform this action'))
+            return next(new ApiError(403, 'Not allowed'));
         }
         next();
-        
-    })
+    });
+};
 
-}
+// ================= FORGOT PASSWORD =================
+exports.forgotPassword = asyncHandler(async (req, res, next) => {
+    const { email } = req.body;
+
+    const user = await UserModel.findOne({ email });
+
+    if (!user) {
+        return next(new ApiError(404, 'No user with this email'));
+    }
+
+    const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
+
+    const hashedCode = crypto
+        .createHash('sha256')
+        .update(resetCode)
+        .digest('hex');
+
+    user.passwordResetCode = hashedCode;
+    user.passwordResetExpires = Date.now() + 10 * 60 * 1000;
+    user.passwordResetVerified = false;
+
+    await user.save();
+
+    await sendEmail({
+        email: user.email,
+        subject: 'Password reset code',
+        message: `Your reset code: ${resetCode}`
+    });
+
+    res.status(200).json({
+        status: 'success',
+        message: 'Reset code sent'
+    });
+});
+
+// ================= VERIFY RESET CODE =================
+exports.verifyResetCode = asyncHandler(async (req, res, next) => {
+    const { resetCode } = req.body;
+
+    const hashedCode = crypto
+        .createHash('sha256')
+        .update(resetCode)
+        .digest('hex');
+
+    const user = await UserModel.findOne({
+        passwordResetCode: hashedCode,
+        passwordResetExpires: { $gt: Date.now() }
+    });
+
+    if (!user) {
+        return next(new ApiError(400, 'Invalid or expired code'));
+    }
+
+    user.passwordResetVerified = true;
+    await user.save();
+
+    res.status(200).json({
+        status: 'success',
+        message: 'Code verified'
+    });
+});
+
+// ================= RESET PASSWORD =================
+exports.resetPassword = asyncHandler(async (req, res, next) => {
+    const { email, newPassword } = req.body;
+
+    const user = await UserModel.findOne({ email });
+
+    if (!user) {
+        return next(new ApiError(404, 'User not found'));
+    }
+
+    if (!user.passwordResetVerified) {
+        return next(new ApiError(400, 'Reset code not verified'));
+    }
+
+    // update password
+    user.password = newPassword;
+
+    // clear reset fields
+    user.passwordResetCode = undefined;
+    user.passwordResetExpires = undefined;
+    user.passwordResetVerified = undefined;
+
+    await user.save();
+
+    // generate new token
+    const token = createToken({ userId: user._id });
+
+    res.status(200).json({
+        status: 'success',
+        message: 'Password reset successfully',
+        token
+    });
+});
