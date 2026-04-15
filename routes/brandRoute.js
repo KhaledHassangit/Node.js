@@ -26,7 +26,7 @@ router
     .get(getAllBrands)
     .post(authService.protect,
         authService.restrictTo("admin"),
-        ploadBrandImage, reSizeBrandImage, createBrandValidator, createBrand);
+        uploadBrandImage, reSizeBrandImage, createBrandValidator, createBrand);
 
 //  ID routes
 router

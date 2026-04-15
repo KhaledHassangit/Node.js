@@ -1,5 +1,7 @@
 const express = require("express");
+const router = express.Router();
 
+// ================= CONTROLLERS =================
 const {
     createUser,
     getAllUsers,
@@ -15,6 +17,7 @@ const {
     updateLoggedUserData
 } = require("../controllers/userService");
 
+// ================= VALIDATORS =================
 const {
     getUserValidator,
     createUserValidator,
@@ -23,62 +26,61 @@ const {
     changeUserPasswordValidator,
 } = require("../validators/userValidator");
 
-const router = express.Router();
+// ================= AUTH =================
 const authService = require("../controllers/authService");
 
-router.get("/getMe", authService.protect, getLoggedUserData, getUserById);
-router.put("/changePassword", authService.protect, updateLoggedUserPassword);
-router.put("/updateMe", authService.protect, uploadUserImage, resizeUserImage, updateLoggedUserData);
-router.delete("/deleteMe", authService.protect, deleteLoggedUserData);
+// ================= GLOBAL MIDDLEWARE =================
+router.use(authService.protect);
 
-// GET ALL & CREATE
+// ================= LOGGED USER ROUTES =================
+router.get("/me", getLoggedUserData, getUserById);
+
+router.put(
+    "/me/update",
+    uploadUserImage,
+    resizeUserImage,
+    updateLoggedUserData
+);
+
+router.put("/me/change-password", updateLoggedUserPassword);
+
+router.delete("/me/delete", deleteLoggedUserData);
+
+// ================= ADMIN ONLY ROUTES =================
+router.use(authService.restrictTo("admin"));
+
+// GET ALL USERS & CREATE USER
 router
     .route("/")
-    .get(authService.protect,
-        authService.restrictTo("admin"),
-        getAllUsers)
+    .get(getAllUsers)
     .post(
-        authService.protect,
-        authService.restrictTo("admin"),
         uploadUserImage,
         resizeUserImage,
         createUserValidator,
         createUser
     );
 
-
-// ==========================
-// CHANGE PASSWORD
-// ==========================
+// ================= CHANGE PASSWORD (ADMIN) =================
 router.patch(
-    authService.protect,
-    "/changePassword/:id",
+    "/change-password/:id",
     changeUserPasswordValidator,
     changeUserPassword
 );
 
-
-// ==========================
-//  ID ROUTES
-// ==========================
+// ================= USER BY ID =================
 router
     .route("/:id")
-    .get(authService.protect,
-        authService.restrictTo("admin"),
-        getUserValidator, getUserById)
+    .get(getUserValidator, getUserById)
     .put(
-        authService.protect,
-        authService.restrictTo("admin"),
         uploadUserImage,
         resizeUserImage,
         updateUserValidator,
         updateUser
     )
-
-    .delete(authService.protect,
-        authService.restrictTo("admin"),
+    .delete(
         getUserValidator,
-        deleteUserValidator, deleteUser);
-
+        deleteUserValidator,
+        deleteUser
+    );
 
 module.exports = router;

@@ -73,6 +73,9 @@ const productSchema = new mongoose.Schema({
         type: Number,
         default: 0,
     },
+    // to enable virtual populate
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
 
 }, { timestamps: true })
 
@@ -111,5 +114,15 @@ productSchema.post("save", (doc) => {
             return `${process.env.BASE_URL}/products/${img}`;
         });
     }
+
 });
+
+// Get Product reviews (virtual populate)
+productSchema.virtual('reviews', {
+    ref: 'Review',
+    foreignField: 'product',
+    localField: '_id',
+})
+
+
 module.exports = productModel

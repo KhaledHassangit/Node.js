@@ -87,7 +87,8 @@ exports.getProductById = factory.getOne(
     [
         { path: 'category', select: 'name' },
         { path: 'subCategory', select: 'name' },
-        { path: 'brand', select: 'name' }
+        { path: 'brand', select: 'name' },
+        { path: 'reviews' }
     ]
 );
 
