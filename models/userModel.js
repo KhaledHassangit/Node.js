@@ -52,15 +52,29 @@ const userSchema = new mongoose.Schema(
             type: Boolean,
             default: true,
         },
+        passwordChangedAt: Date,
         passwordResetCode: String,
         passwordResetExpires: Date,
+        passwordResetVerified: Boolean,
         phoneNumber: String,
 
-        address: String,
+        addresses: [
+            {
+                id: { type: mongoose.Schema.Types.ObjectId },
+                alias: String,
+                details: String,
+                phone: String,
+                city: String,
+                postalCode: String,
+            },
+        ],
 
         profileImg: String,
 
-        passwordChangedAt: Date,
+        wishlist: [{
+            type: mongoose.Schema.ObjectId,
+            ref: 'Product',
+        }]
     },
     { timestamps: true }
 );
