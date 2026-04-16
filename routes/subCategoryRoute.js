@@ -6,6 +6,8 @@ const {
     getSubCategoryById,
     updateSubCategory,
     deleteSubCategory,
+    setCategoryIdToBody,
+    createFilterObj,
 } = require("../controllers/subCategoryService");
 
 const {
@@ -21,9 +23,10 @@ const router = express.Router({ mergeParams: true }); //  to access parent route
 //  GET ALL & CREATE
 router
     .route("/")
-    .get(getAllSubCategories)
+    .get(createFilterObj, getAllSubCategories)
     .post(authService.protect,
         authService.restrictTo("admin"),
+        setCategoryIdToBody,
         createSubCategoryValidator, createSubCategory);
 
 //  ID routes

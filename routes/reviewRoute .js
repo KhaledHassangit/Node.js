@@ -6,7 +6,8 @@ const {
     getReviewById,
     updateReview,
     deleteReview,
-    setProductIdAndUserId
+    setProductIdAndUserId,
+    createFilterObj
 } = require("../controllers/reviewService");
 
 const {
@@ -18,12 +19,12 @@ const {
 
 const authService = require("../controllers/authService");
 
-const router = express.Router();
+const router = express.Router({ mergeParams: true });
 
 // GET ALL & CREATE
 router
     .route("/")
-    .get(getAllReviews)
+    .get(createFilterObj, getAllReviews)
     .post(
         authService.protect,
         authService.allowedTo('user'),
@@ -44,7 +45,7 @@ router
     )
     .delete(
         authService.protect,
-        authService.allowedTo('user'),
+        authService.allowedTo('user',"admin"),
         deleteReviewValidator,
         deleteReview
     );

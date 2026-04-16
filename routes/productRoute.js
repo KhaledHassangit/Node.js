@@ -17,8 +17,11 @@ const {
     deleteProductValidator,
 } = require("../validators/productValidator");
 const authService = require("../controllers/authService");
+const reviewRoute = require("./reviewRoute ");
 
 const router = express.Router();
+
+router.use("/:productId/reviews", reviewRoute);
 
 //  GET ALL & CREATE
 router
