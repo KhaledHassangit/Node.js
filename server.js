@@ -10,11 +10,7 @@ const dbConnection = require('./config/database');
 const ApiError = require('./utils/apiError');
 const globalErrorHandler = require('./middlewares/errorMiddleware');
 
-const categoryRoute = require('./routes/categoryRoute');
-const subcategoryRoute = require('./routes/subCategoryRoute');
-const brandRoute = require('./routes/brandRoute');
-const productRoute = require('./routes/productRoute');
-const userRoute = require('./routes/userRoute');
+const mountRoutes = require('./routes/index');
 
 
 /// ================= CONFIG =================
@@ -35,12 +31,7 @@ if (process.env.NODE_ENV !== 'production') {
 
 
 /// ================= ROUTES =================
-app.use('/api/v1/categories', categoryRoute);
-app.use('/api/v1/subcategories', subcategoryRoute);
-app.use('/api/v1/brands', brandRoute);
-app.use('/api/v1/products', productRoute);
-app.use('/api/v1/users', userRoute);
-
+mountRoutes(app);
 
 /// ================= NOT FOUND =================
 app.use((req, res, next) => {
