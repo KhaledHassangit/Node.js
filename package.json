@@ -13,6 +13,8 @@
   "dependencies": {
     "bcryptjs": "^3.0.3",
     "colors": "^1.4.0",
+    "compression": "^1.8.1",
+    "cors": "^2.8.6",
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
     "express-async-handler": "^1.2.0",
@@ -24,6 +26,7 @@
     "nodemailer": "^8.0.5",
     "sharp": "^0.34.5",
     "slugify": "^1.6.9",
+    "stripe": "^22.0.2",
     "uuid": "^13.0.0"
   },
   "devDependencies": {

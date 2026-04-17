@@ -1,6 +1,8 @@
 /// ================= IMPORTS =================
 const express = require('express');
 const path = require('path');
+const cors = require('cors')
+const compression = require('compression')
 
 const morgan = require('morgan');
 const dotenv = require('dotenv');
@@ -11,6 +13,7 @@ const ApiError = require('./utils/apiError');
 const globalErrorHandler = require('./middlewares/errorMiddleware');
 
 const mountRoutes = require('./routes/index');
+const { webhookCheckout } = require('./controllers/orderService');
 
 
 /// ================= CONFIG =================
@@ -19,8 +22,9 @@ dotenv.config({ path: './config.env' });
 
 /// ================= APP INIT =================
 const app = express();
-
-
+app.use(cors());
+app.options('*', cors());
+app.use(compression());
 /// ================= MIDDLEWARES =================
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'uploads')));
@@ -62,3 +66,11 @@ process.on('unhandledRejection', (err) => {
         process.exit(1);
     });
 });
+
+
+// Checkout webhook
+app.post(
+    '/webhook-checkout',
+    express.raw({ type: 'application/json' }),
+    webhookCheckout
+);
