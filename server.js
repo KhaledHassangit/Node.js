@@ -1,8 +1,12 @@
 /// ================= IMPORTS =================
 const express = require('express');
 const path = require('path');
+
 const cors = require('cors')
 const compression = require('compression')
+const hpp = require('hpp');
+const bodyParser = require('body-parser');
+const mongoSanitize = require('express-mongo-sanitize');
 
 const morgan = require('morgan');
 const dotenv = require('dotenv');
@@ -14,6 +18,7 @@ const globalErrorHandler = require('./middlewares/errorMiddleware');
 
 const mountRoutes = require('./routes/index');
 const { webhookCheckout } = require('./controllers/orderService');
+const { rateLimit } = require('express-rate-limit');
 
 
 /// ================= CONFIG =================
@@ -26,8 +31,27 @@ app.use(cors());
 app.options('*', cors());
 app.use(compression());
 /// ================= MIDDLEWARES =================
-app.use(express.json());
+app.use(express.json({ limit: "20kb" }));
 app.use(express.static(path.join(__dirname, 'uploads')));
+app.use(mongoSanitize());
+
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    limit: 100, // Limit each IP to 100 requests per `window` (here, per 15 minutes).
+    message: 'Too many requests from this IP, please try again after 15 minutes',
+})
+
+// Apply the rate limiting middleware to all requests.
+app.use('/api', limiter);
+
+app.use(express.urlencoded({ extended: true, limit: '20kb' }));
+// Express middleware to protect against HTTP Parameter Pollution attacks
+app.use(hpp({
+    whitelist: ['price', 'ratingsAverage',
+        'ratingsQuantity', 'quantity', 'sold']
+}));
+
+/// ================= LOGGING =================
 
 if (process.env.NODE_ENV !== 'production') {
     app.use(morgan('dev'));
